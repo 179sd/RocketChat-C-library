@@ -2,7 +2,6 @@
 #define RCHEADER
 #include <curl/curl.h>
 #include <string>
-#include <stdio.h>
 #include "include/json.hpp"
 #include "include/rapidjson/document.h"
 
@@ -35,7 +34,6 @@ RCAPI::RCAPI(std::string url){
 	curl_easy_setopt(CurlAPI, CURLOPT_CUSTOMREQUEST, "POST");
 	curl_easy_setopt(CurlAPI, CURLOPT_WRITEFUNCTION, IHCB);
 	curl_easy_setopt(CurlAPI, CURLOPT_WRITEDATA, &APIResponse);
-	curl_easy_setopt(CurlAPI, CURLOPT_VERBOSE, 1L);
 	headers = curl_slist_append(headers, "Accept: application/json");
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	curl_easy_setopt(CurlAPI, CURLOPT_HTTPHEADER, headers);
