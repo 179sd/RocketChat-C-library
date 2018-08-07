@@ -19,6 +19,7 @@
 using namespace nlohmann;
 using namespace rapidjson;
 
+<<<<<<< HEAD
 //Error Consts
 
 //General Errors
@@ -32,6 +33,8 @@ const unsigned int RCAPI_NOMESSAGEORATTACHMENT = 2;
 //Login function errors
 
 
+=======
+>>>>>>> 94c0b73e2c1094815f2f6ac90333a9ac4f161478
 //Callback function for libcUrl to writedata to a string
 //Notice the lack of error catching
 //I like to live dangerously ;)
@@ -97,8 +100,11 @@ class RCAPI {
 		~RCAPI();
 		//Login function
 		int Login(std::string Username, std::string Password);
+<<<<<<< HEAD
 		//Logout function
 		int Logout();
+=======
+>>>>>>> 94c0b73e2c1094815f2f6ac90333a9ac4f161478
 		//Message send function
 		int SendMessage(std::string Channel, rcmessage Message);		
 	private:
@@ -136,19 +142,32 @@ RCAPI::RCAPI(std::string url){
 
 int RCAPI::Login(std::string Username, std::string Password){
 	//nlohmann json variable containing username and password to send
+<<<<<<< HEAD
 	//json senddata = { {"password", Password.c_str()}, {"username", Username.c_str()}};
 		
 	std::string jsenddata = "{\"username\":\"" + Username + "\", \"password\":\"" + Password + "\"}";
 	
+=======
+	json senddata = { {"password", Password.c_str()}, {"username", Username.c_str()}};
+>>>>>>> 94c0b73e2c1094815f2f6ac90333a9ac4f161478
 	//rapidjson variable used to parse data recieved
 	Document JP;
 
 	//Authentication token
 	std::string AuthToken = "X-Auth-Token: ";
+<<<<<<< HEAD
 	
 	//User ID
 	std::string UserId = "X-User-Id: ";
 	
+=======
+	//User ID
+	std::string UserId = "X-User-Id: ";
+	
+	//Dumps the json into a string because of a wierd bug with libcurl
+	std::string jsenddata = senddata.dump();
+	
+>>>>>>> 94c0b73e2c1094815f2f6ac90333a9ac4f161478
 	//Curl options
 	//Combines the api url and outputs it as a c string
 	curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"login").c_str());
@@ -180,18 +199,29 @@ int RCAPI::Login(std::string Username, std::string Password){
 
 
 //Going to reimplement the message function to support the linked list.
+<<<<<<< HEAD
 int RCAPI::SendMessage(std::string Channel, rcmessage * Message){
 	if(LoggedIn){
 		if(Message->Text != "" | !(Message->Attachment)){
 
+=======
+int RCAPI::SendMessage(std::string Channel, rcmessage Message){
+	if(LoggedIn){
+		/*
+		json sendmessage = {{"channel", Channel.c_str()},{"text", Message.c_str()}};
+>>>>>>> 94c0b73e2c1094815f2f6ac90333a9ac4f161478
 		std::string jsendmessage = sendmessage.dump();
 		curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"chat.postMessage").c_str());
 		curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, jsendmessage.c_str());
 		curl_easy_perform(CurlAPI);
+<<<<<<< HEAD
 		}
 		else {
 			return 1;
 		}	
+=======
+		*/	
+>>>>>>> 94c0b73e2c1094815f2f6ac90333a9ac4f161478
 	}
 
 }	
