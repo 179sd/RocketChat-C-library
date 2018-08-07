@@ -12,16 +12,18 @@ using namespace nlohmann;
 using namespace rapidjson;
 
 //Error Consts
-
-//General Errors
+const unsigned int RCAPI_GOOD = 0;
+//General Errors 1 - 10
 const unsigned int RCAPI_NOTLOGGEDIN = 1;
+const unsigned int RCAPI_EMPTYSTRING = 2;
 
-//Connection Errors
+//Connection Errors 11-20
 
-//Message function errors
-const unsigned int RCAPI_NOMESSAGEORATTACHMENT = 2;
+//Message function errors 21-30
+const unsigned int RCAPI_NOMESSAGEORATTACHMENT = 21;
 
-//Login function errors
+//Login function errors 31-40
+const unsigned int RCAPI_INCORRECTLOGIN = 32;
 
 //Callback function for libcUrl to writedata to a string
 //Notice the lack of error catching
@@ -104,6 +106,7 @@ class RCAPI {
 		//Curl stuff
 		//Information about the connection
 		CURL *CurlAPI;
+		CURLcode RequestResponse;
 		//http header
 		struct curl_slist *headers = NULL;
 };
@@ -184,21 +187,14 @@ int RCAPI::Login(std::string Username, std::string Password){
 int RCAPI::SendMessage(std::string Channel, rcmessage * Message){
 	if(LoggedIn){
 		if(Message->Text != "" | !(Message->Attachment)){
-
-int RCAPI::SendMessage(std::string Channel, rcmessage Message){
-	if(LoggedIn){
-		/*
-		json sendmessage = {{"channel", Channel.c_str()},{"text", Message.c_str()}};
-		std::string jsendmessage = sendmessage.dump();
-		curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"chat.postMessage").c_str());
-		curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, jsendmessage.c_str());
-		curl_easy_perform(CurlAPI);
+			return RCAPI_GOOD;
 		}
-		else {
-			return 1;
-		}	
-		*/	
-
+		else{
+			return RCAPI_NOMESSAGEORATTACHMENT;
+		}
+	}
+	else{
+		return RCAPI_NOTLOGGEDIN;
 	}
 
 }	
