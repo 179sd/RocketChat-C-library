@@ -28,23 +28,23 @@ const unsigned int RCAPI_INCORRECTLOGIN = 32;
 
 //Array storing message request parameters
 const std::string MESSAGEVARS[] = {
-	"",                //\\	d																	A
-	"",               //  \\	d															A
-	"",              //    \\		d													A
-	"",             //      \\			d											A
-	"",            //        \\				d									A
-	"",           //          \\					d							A
-	"",          //            \\						d					A
-	"",         //              \\							d			A
-	"",        //                \\								d	A
-	"",       //                  \\							A		d
-	"",      //                    \\						A				d
-	"",     //                      \\					A						d
-	"",    //                        \\				A								d
-	"",   //                          \\			A										d
-	"",  //                            \\		A												d
-	"", //                              \\	A														d
-	"" //================================\\																d
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"" 
 }
 //Callback function for libcUrl to writedata to a string
 //Notice the lack of error catching
