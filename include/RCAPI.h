@@ -13,6 +13,7 @@ using namespace rapidjson;
 
 //Error Consts
 const unsigned int RCAPI_GOOD = 0;
+
 //General Errors 1 - 10
 const unsigned int RCAPI_NOTLOGGEDIN = 1;
 const unsigned int RCAPI_EMPTYSTRING = 2;
@@ -25,6 +26,26 @@ const unsigned int RCAPI_NOMESSAGEORATTACHMENT = 21;
 //Login function errors 31-40
 const unsigned int RCAPI_INCORRECTLOGIN = 32;
 
+//Array storing message request parameters
+const std::string MESSAGEVARS[] = {
+	"",                //\\	d																	A
+	"",               //  \\	d															A
+	"",              //    \\		d													A
+	"",             //      \\			d											A
+	"",            //        \\				d									A
+	"",           //          \\					d							A
+	"",          //            \\						d					A
+	"",         //              \\							d			A
+	"",        //                \\								d	A
+	"",       //                  \\							A		d
+	"",      //                    \\						A				d
+	"",     //                      \\					A						d
+	"",    //                        \\				A								d
+	"",   //                          \\			A										d
+	"",  //                            \\		A												d
+	"", //                              \\	A														d
+	"" //================================\\																d
+}
 //Callback function for libcUrl to writedata to a string
 //Notice the lack of error catching
 //I like to live dangerously ;)
@@ -36,40 +57,7 @@ size_t IHCB(void *contents, size_t size, size_t nmemb, std::string *userdata){
 	return nL;
 }
 
-//Prepareing struct and linked list to finsh messaging functionality
-//Will include attachments
-//Message - The actual message, you can change things like your nickname
-//Avatar or add a attachment.
-typedef struct MessageBlob{
-	std::string Text = "";
-	std::string Alias = "";
-	std::string Emoji = "";
-	std::string Avatar = "";
-	rcattachment *Attachment = NULL; 
-
-} rcmessage;
-//Attachment- Allows you to embed a Picture, Video, Or Audio into 
-//your message.
-typedef struct AttachmentBlob{
-	std::string Color = "";
-	std::string Text = "";
-	std::string Ts = "";
-	std::string Thumb_Url = "";
-	std::string Message_Link = "";
-	std::string Collapsed = "";
-	std::string Author_Name = "";
-	std::string Author_Link = "";
-	std::string Author_Icon = "";
-	std::string Title = "";
-	std::string Title_Link = ";
-	std::string Title_Link_Download = "";
-	std::string Image_Url = "";
-	std::string Audio_Url = "";
-	std::string Video_Url = "";
-	rcfields *fields = NULL;
-
-} rcattachment;
-
+/*
 //Fields - Some extra fields to describe the attachments
 //It's a linked list as RC API allows you to have multiple
 typedef struct AttachmentFields{
@@ -78,6 +66,14 @@ typedef struct AttachmentFields{
 	std::string Value;
 	rcfields *Next;
 } rcfields;
+*/
+
+const std::string MESSAGEVALUES[] = {"channel", "text", "alias" , "emoji", "avatar"}
+
+typdef struct MessageBlob{
+	std::string Value;
+	rcmessage *Next;
+} rcmessage;
 
 //The RCAPI object
 //Will allow you to have multiple instances of different accounts, perfect for mutiple servers
@@ -97,6 +93,7 @@ class RCAPI {
 		//Message send function
 		int SendMessage(std::string Channel, rcmessage Message);		
 	private:
+
 		//login status
 		bool LoggedIn = false;
 		//Rocket Chat API URL
@@ -127,6 +124,7 @@ RCAPI::RCAPI(std::string url){
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	//Points it to the header struct
 	curl_easy_setopt(CurlAPI, CURLOPT_HTTPHEADER, headers);
+	loggedin = true;
 	
 }
 
@@ -135,8 +133,6 @@ int RCAPI::Login(std::string Username, std::string Password){
 	//json senddata = { {"password", Password.c_str()}, {"username", Username.c_str()}};
 		
 	std::string jsenddata = "{\"username\":\"" + Username + "\", \"password\":\"" + Password + "\"}";
-
-	json senddata = { {"password", Password.c_str()}, {"username", Username.c_str()}};
 
 	//rapidjson variable used to parse data recieved
 	Document JP;
@@ -149,10 +145,7 @@ int RCAPI::Login(std::string Username, std::string Password){
 
 	//User ID
 	std::string UserId = "X-User-Id: ";
-	
-	//Dumps the json into a string because of a wierd bug with libcurl
-	std::string jsenddata = senddata.dump();
-	
+		
 	//Curl options
 	//Combines the api url and outputs it as a c string
 	curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"login").c_str());
@@ -182,22 +175,75 @@ int RCAPI::Login(std::string Username, std::string Password){
        	LoggedIn = true;	
 }
 
+//Going to reimplement the message function to support a message object.
 
-//Going to reimplement the message function to support the linked list.
-int RCAPI::SendMessage(std::string Channel, rcmessage * Message){
-	if(LoggedIn){
-		if(Message->Text != "" | !(Message->Attachment)){
-			return RCAPI_GOOD;
-		}
-		else{
-			return RCAPI_NOMESSAGEORATTACHMENT;
-		}
+int RCAPI::SendMessage(MessageObj Message){
+	if(LoggedIn){		
+		return RCAPI_GOOD;
 	}
 	else{
 		return RCAPI_NOTLOGGEDIN;
 	}
 
 }	
+class MessageObj {
+	public:
+		std::string Text = "";
+		std::string Alias = "";
+		std::string Emoji = "";
+		std::string Avatar = "";
+
+		std::string AColor = "";
+		std::string AText = "";
+		std::string ATs = "";
+		std::string AThumb_Url = "";
+		std::string AMessage_Link = "";
+		std::string ACollapsed = "";
+		std::string AAuthor_Name = "";
+		std::string AAuthor_Link = "";
+		std::string AAuthor_Icon = "";
+		std::string ATitle = "";
+		std::string ATitle_Link = "";
+		std::string ATitle_Link_Download = "";
+		std::string AImage_Url = "";
+		std::string AAudio_Url = "";
+		std::string AVideo_Url = "";
+
+		std::string AssembleJson();
+	private:
+		std::string JsonFormat(int ConstArray, std::string Value);
+};
+
+std::string MessageObj::JsonFormat(int ConstArray, std::string Value){
+	if(Value != "")
+		return "\"" + MESSAGEVARS[ConstArray] + "\":\"" + Value + "\",";
+	else
+		return "";
+}
+
+std::string MessageObj::AssembleJson(){
+	std::string MessageJson = "{";
+
+	MessageJson.append(JsonFormat(0, Text);
+	MessageJson.append(JsonFormat(1, Alias));
+	MessageJson.append(JsonFormat(2, Emoji));
+	MessageJson.append(JsonFormat(3, Avatar));
+	MessageJson.append(JsonFormat(4, AColor));
+	MessageJson.append(JsonFormat(5, AText));
+	MessageJson.append(JsonFormat(6, ATs));
+	MessageJson.append(JsonFormat(7, AThumb_Url));
+	MessageJson.append(JsonFormat(8, AMessage_Link));
+	MessageJson.append(JsonFormat(9, ACollapsed));
+	MessageJson.append(JsonFormat(10, AAuthor_Name));
+	MessageJson.append(JsonFormat(11, AAuthor_Link));
+	MessageJson.append(JsonFormat(12, ATitle));
+	MessageJson.append(JsonFormat(13, ATitle_Link));
+	MessageJson.append(JsonFormat(14, ATitle_Link_Download));
+	MessageJson.append(JsonFormat(15, AImage_Url));
+	MessageJson.append(JsonFormat(16, AAudio_Url));
+	MessageJson.append(JsonFormat(17, AVideo_Url));
 
 
+	return MessageJson;
+}
 #endif
