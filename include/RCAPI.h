@@ -1,3 +1,13 @@
+            /////////////////          /////////////////    ///////////////////   ////////////////////    ///////////////////////
+           ///           ///          ///                  ///             ///   ///              ///              ///
+          ///           ///          ///                  ///             ///   ///              ///              ///
+         ///           ///          ///                  ///             ///   ///              ///              ///
+        /////////////////          ///                  ///////////////////   ////////////////////              ///
+       ///            \\\         ///                  ///             ///   ///                               ///
+      ///              \\\       ///                  ///             ///   ///                               ///
+     ///                \\\     ///                  ///             ///   ///                               ///
+    ///                  \\\   //////////////////   ///             ///   ///                     ////////////////////////
+
 #ifndef RCHEADER
 #define RCHEADER
 
@@ -10,41 +20,51 @@
 //Namespaces
 using namespace nlohmann;
 using namespace rapidjson;
+//Typedef
+typedef const unsigned int ERROR;
+typedef const unsigned int GOOD;
+//Error 5012 means the error code was not set yet!!! Remind me please!!!
+//Good codes
+GOOD RCAPI_GOOD = 0;
+GOOD MESSAGEOBJ_GOOD = 1;
 
-//Error Consts
-const unsigned int RCAPI_GOOD = 0;
+//Error codes
+//General Errors 11 - 20
+ERROR RCAPI_NOTLOGGEDIN = 11;
+ERROR RCAPI_EMPTYSTRING = 12;
 
-//General Errors 1 - 10
-const unsigned int RCAPI_NOTLOGGEDIN = 1;
-const unsigned int RCAPI_EMPTYSTRING = 2;
+//Connection Errors 21-30
 
-//Connection Errors 11-20
+//Message function errors 31-40
+ERROR RCAPI_NOMESSAGEORATTACHMENT = 31;
 
-//Message function errors 21-30
-const unsigned int RCAPI_NOMESSAGEORATTACHMENT = 21;
+//Login function errors 41-50
+ERROR RCAPI_INCORRECTLOGIN = 41;
 
-//Login function errors 31-40
-const unsigned int RCAPI_INCORRECTLOGIN = 32;
+//Message Obj 51-60
+ERROR MESSAGEOBJ_NOVALUE = 51;
 
 //Array storing message request parameters
 const std::string MESSAGEVARS[] = {
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"" 
+	"channel",
+	"text",
+	"alias",
+	"emoji",
+	"avatar",
+	"color",
+	"text",
+	"ts",
+	"thumb_url",
+	"message_url",
+	"collapsed",
+	"author_name",
+	"author_link",
+	"title",
+	"title_link",
+	"title_link_download",
+	"image_url",
+       	"audio_url",
+	"video_url"	
 }
 //Callback function for libcUrl to writedata to a string
 //Notice the lack of error catching
@@ -92,8 +112,8 @@ class RCAPI {
 
 		//Message send function
 		int SendMessage(std::string Channel, rcmessage Message);		
+	
 	private:
-
 		//login status
 		bool LoggedIn = false;
 		//Rocket Chat API URL
@@ -188,6 +208,7 @@ int RCAPI::SendMessage(MessageObj Message){
 }	
 class MessageObj {
 	public:
+		std::string Channel = "";
 		std::string Text = "";
 		std::string Alias = "";
 		std::string Emoji = "";
@@ -208,41 +229,49 @@ class MessageObj {
 		std::string AImage_Url = "";
 		std::string AAudio_Url = "";
 		std::string AVideo_Url = "";
-
-		std::string AssembleJson();
+	
 	private:
-		std::string JsonFormat(int ConstArray, std::string Value);
+		int AssembleJson();
+		int JsonFormat(int ConstArray, std::string Value);
 };
 
-std::string MessageObj::JsonFormat(int ConstArray, std::string Value){
-	if(Value != "")
-		return "\"" + MESSAGEVARS[ConstArray] + "\":\"" + Value + "\",";
+int MessageObj::JsonFormat(int ConstArray, std::string Value = "", std::string * RetJson){
+	 if(Value != ""){
+		*RetJson.append("\"" + MESSAGEVARS[ConstArray] + "\":\"" + Value + "\",");
+	 	return MESSAGEOBJ_GOOD;
+	}
+	if(ConstArray == -1){
+		*RetJson.append("\"a\":\"b\"}");
+		return MESSAGEOBJ_GOOD
+	}
 	else
-		return "";
+		return MESSAGEOBJ_;
 }
 
-std::string MessageObj::AssembleJson(){
+int MessageObj::AssembleJson(std::string * MessageJson){
 	std::string MessageJson = "{";
+	int CurrentParameter = 0;
 
-	MessageJson.append(JsonFormat(0, Text);
-	MessageJson.append(JsonFormat(1, Alias));
-	MessageJson.append(JsonFormat(2, Emoji));
-	MessageJson.append(JsonFormat(3, Avatar));
-	MessageJson.append(JsonFormat(4, AColor));
-	MessageJson.append(JsonFormat(5, AText));
-	MessageJson.append(JsonFormat(6, ATs));
-	MessageJson.append(JsonFormat(7, AThumb_Url));
-	MessageJson.append(JsonFormat(8, AMessage_Link));
-	MessageJson.append(JsonFormat(9, ACollapsed));
-	MessageJson.append(JsonFormat(10, AAuthor_Name));
-	MessageJson.append(JsonFormat(11, AAuthor_Link));
-	MessageJson.append(JsonFormat(12, ATitle));
-	MessageJson.append(JsonFormat(13, ATitle_Link));
-	MessageJson.append(JsonFormat(14, ATitle_Link_Download));
-	MessageJson.append(JsonFormat(15, AImage_Url));
-	MessageJson.append(JsonFormat(16, AAudio_Url));
-	MessageJson.append(JsonFormat(17, AVideo_Url));
-
+	JsonFormat(CurrentParameter, Channel);
+	JsonFormat(++CurrentParameter, Text);
+	JsonFormat(++CurrentParameter, Alias);
+	JsonFormat(++CurrentParameter, Emoji);
+	JsonFormat(++CurrentParameter, Avatar);
+	JsonFormat(++CurrentParameter, AColor);
+	JsonFormat(++CurrentParameter, AText);
+	JsonFormat(++CurrentParameter, ATs);
+	JsonFormat(++CurrentParameter, AThumb_Url);
+	JsonFormat(++CurrentParameter, AMessage_Link);
+	JsonFormat(++CurrentParameter, ACollapsed);
+	JsonFormat(++CurrentParameter, AAuthor_Name);
+	JsonFormat(++CurrentParameter, AAuthor_Link);
+	JsonFormat(++CurrentParameter, ATitle);
+	JsonFormat(++CurrentParameter, ATitle_Link);
+	JsonFormat(++CurrentParameter, ATitle_Link_Download);
+	JsonFormat(++CurrentParameter, AImage_Url);
+	JsonFormat(++CurrentParameter, AAudio_Url);
+	JsonFormat(++CurrentParameter, AVideo_Url);
+	JsonFormat(-1);
 
 	return MessageJson;
 }
