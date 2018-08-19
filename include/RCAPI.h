@@ -14,15 +14,15 @@
 //Includes
 #include <curl/curl.h>
 #include <string>
-#include "include/json.hpp"
-#include "include/rapidjson/document.h"
+#include "include/tao/json.hpp"
 
 //Namespaces
-using namespace nlohmann;
-using namespace rapidjson;
+using namespace ;
+
 //Typedef
 typedef const unsigned int ERROR;
 typedef const unsigned int GOOD;
+
 //Error 5012 means the error code was not set yet!!! Remind me please!!!
 //Good codes
 GOOD RCAPI_GOOD = 0;
@@ -77,23 +77,6 @@ size_t IHCB(void *contents, size_t size, size_t nmemb, std::string *userdata){
 	return nL;
 }
 
-/*
-//Fields - Some extra fields to describe the attachments
-//It's a linked list as RC API allows you to have multiple
-typedef struct AttachmentFields{
-	std::string Short;
-	std::string Title;
-	std::string Value;
-	rcfields *Next;
-} rcfields;
-*/
-
-const std::string MESSAGEVALUES[] = {"channel", "text", "alias" , "emoji", "avatar"}
-
-typdef struct MessageBlob{
-	std::string Value;
-	rcmessage *Next;
-} rcmessage;
 
 //The RCAPI object
 //Will allow you to have multiple instances of different accounts, perfect for mutiple servers
@@ -116,89 +99,127 @@ class RCAPI {
 	private:
 		//login status
 		bool LoggedIn = false;
+		
 		//Rocket Chat API URL
-		std::string APIURL = "";
+		std::string APIUrl = "";
+		
 		//Response from API call
 		std::string APIResponse;
+		
 		//Curl stuff
 		//Information about the connection
 		CURL *CurlAPI;
 		CURLcode RequestResponse;
+		
 		//http header
 		struct curl_slist *headers = NULL;
+		
+		//Function for sending data
+		int SendData(std::string Data, std::string Url);
+
+		//Function for extracting data from json
+		int ExtractData(std::string Json, std::string key);
 };
+
 RCAPI::RCAPI(std::string url){
 	//Store the url given
-	APIURL = url;
+	APIUrl = url;
+
 	//Initiate Curl
 	CurlAPI = curl_easy_init();
+	
 	//Curl options
 	//Sets request to POST
 	curl_easy_setopt(CurlAPI, CURLOPT_CUSTOMREQUEST, "POST");
+	
 	//Declares callback function for writing data recieved
 	curl_easy_setopt(CurlAPI, CURLOPT_WRITEFUNCTION, IHCB);
+	
 	//Declares string to write to
 	curl_easy_setopt(CurlAPI, CURLOPT_WRITEDATA, &APIResponse);
+	
 	//Sets recieve and request type to json 
 	headers = curl_slist_append(headers, "Accept: application/json");
 	headers = curl_slist_append(headers, "Content-Type: application/json");
+	
 	//Points it to the header struct
 	curl_easy_setopt(CurlAPI, CURLOPT_HTTPHEADER, headers);
-	loggedin = true;
 	
 }
 
-int RCAPI::Login(std::string Username, std::string Password){
-	//nlohmann json variable containing username and password to send
-	//json senddata = { {"password", Password.c_str()}, {"username", Username.c_str()}};
-		
-	std::string jsenddata = "{\"username\":\"" + Username + "\", \"password\":\"" + Password + "\"}";
-
-	//rapidjson variable used to parse data recieved
-	Document JP;
-
-	//Authentication token
-	std:::string AuthToken = "X-Auth-Token: ";
+int RCAPI::SendData(std::string Data, std::string Url){
+	curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIUrl+APIURLLINK[]).c_str());
+	curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, Data.c_str());
 	
-	//User ID
-	std::string UserId = "X-User-Id: ";
-
-	//User ID
-	std::string UserId = "X-User-Id: ";
-		
-	//Curl options
-	//Combines the api url and outputs it as a c string
-	curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"login").c_str());
-	//Puts the data in the post fields to be sent
-	curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, jsenddata.c_str());
-
-	//Sends the request
-	curl_easy_perform(CurlAPI);
-
-	//Parses the response
-	JP.Parse(APIResponse.c_str());
-
-	//Extracts the data json string
-	const Value& user = JP["data"];
-	//Extracts the authToken from data
-	AuthToken.append(user["authToken"].GetString());
-	//Extracts the userID from data
-	UserId.append(user["userId"].GetString());
-
-	//Appends the userID and AuthToken to the header
-	headers = curl_slist_append(headers, AuthToken.c_str());
-	headers = curl_slist_append(headers, UserId.c_str());
-
-	//Clears the options to prevent anything bad from happening ;)
-	curl_easy_setopt(CurlAPI, CURLOPT_URL, NULL);
-	curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, NULL);
-       	LoggedIn = true;	
 }
 
+int RCAPI::ExtractData(std::string Json, std::string Key, std::string Type, std::string * Return){
+	switch(Type) {
+		case("string")
+			*ReturnString = JsonParse[Key].GetString();
+
+	}
+	
+
+}
+
+int RCAPI::Login(std::string Username, std::string Password;){
+	if(!LoggedIn){
+		std::string jsenddata = "{\"username\":\"" + Username + "\", \"password\":\"" + Password + "\"}";
+
+		//rapidjson variable used to parse data recieved
+		//Document JP;
+	
+		//Authentication token
+		std:::string AuthToken = "X-Auth-Token: ";
+	
+		//User ID
+		std::string UserId = "X-User-Id: ";
+	
+		//Curl options
+		//Combines the api url and outputs it as a c string
+		curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"login").c_str());
+		
+		//Puts the data in the post fields to be sent
+		curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, jsenddata.c_str());
+
+		//Sends the request
+		curl_easy_perform(CurlAPI);
+		
+		/*
+		//Parses the response
+		JP.Parse(APIResponse.c_str());
+		
+		//Extracts the data json string
+		const Value& user = JP["data"];
+	
+		//Extracts the authToken from data
+		AuthToken.append(user["authToken"].GetString());
+	
+		//Extracts the userID from data
+		UserId.append(user["userId"].GetString());
+		*/
+
+		AuthToken.append();
+		UserId.append();
+		//Appends the userID and AuthToken to the header
+		headers = curl_slist_append(headers, AuthToken.c_str());
+		headers = curl_slist_append(headers, UserId.c_str());
+
+		//Clears the options to prevent anything bad from happening ;)
+		curl_easy_setopt(CurlAPI, CURLOPT_URL, NULL);
+		curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, NULL);
+		LoggedIn = true;	
+	}
+	else {
+		
+	}
+}
 //Going to reimplement the message function to support a message object.
 
 int RCAPI::SendMessage(MessageObj Message){
-	if(LoggedIn){		
+	if(LoggedIn){
+		
 		return RCAPI_GOOD;
 	}
 	else{
