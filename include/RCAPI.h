@@ -17,7 +17,7 @@
 #include "include/tao/json.hpp"
 
 //Namespaces
-using namespace ;
+using namespace tao::json;
 
 //Typedef
 typedef const unsigned int ERROR;
@@ -40,6 +40,7 @@ ERROR RCAPI_NOMESSAGEORATTACHMENT = 31;
 
 //Login function errors 41-50
 ERROR RCAPI_INCORRECTLOGIN = 41;
+ERROR RCAPI_ALREADYLOGGEDIN = 42;
 
 //Message Obj 51-60
 ERROR MESSAGEOBJ_NOVALUE = 51;
@@ -66,6 +67,33 @@ const std::string MESSAGEVARS[] = {
        	"audio_url",
 	"video_url"	
 }
+
+//Array const storing api links
+const std::string APILINK[] = {
+	//Information
+	"",
+	"",
+	"",
+	"",
+	"",
+	//Authentication
+	"login",
+	"logout",
+	"me",
+	//
+	"users",
+	"channels",
+	"groups",
+	"chat",
+	"im",
+	"permissions",
+	"rooms",
+	"commands",
+	"emoji-custom",
+	"settings",
+	"subscriptions"
+}
+
 //Callback function for libcUrl to writedata to a string
 //Notice the lack of error catching
 //I like to live dangerously ;)
@@ -85,8 +113,10 @@ class RCAPI {
 	public:
 		//Constructor
 		RCAPI(std::string url);
+		
 		//Destructor
 		~RCAPI();
+		
 		//Login function
 		int Login(std::string Username, std::string Password);
 
@@ -114,16 +144,19 @@ class RCAPI {
 		//http header
 		struct curl_slist *headers = NULL;
 		
-		//Function for sending data
+		//Function for sending  data
 		int SendData(std::string Data, std::string Url);
 
 		//Function for extracting data from json
 		int ExtractData(std::string Json, std::string key);
+
+		//Function for checking if logged in
+		int CheckIfLoggedIn();
 };
 
 RCAPI::RCAPI(std::string url){
 	//Store the url given
-	APIUrl = url;
+	APIUrl = url+"/api/v1/";
 
 	//Initiate Curl
 	CurlAPI = curl_easy_init();
@@ -147,61 +180,53 @@ RCAPI::RCAPI(std::string url){
 	
 }
 
-int RCAPI::SendData(std::string Data, std::string Url){
-	curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIUrl+APIURLLINK[]).c_str());
+//Private Functions
+int RCAPI::SendData(std::string Data, int ApiLink){
+	curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIUrl+APIURLLINK[ApiLink]).c_str());
 	curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, Data.c_str());
+	curl_easy_perform(CurlAPI);
+	curl_easy_setopt(CurlAPI, CURLOPT_URL, "");
+	curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, "");
 	
 }
 
 int RCAPI::ExtractData(std::string Json, std::string Key, std::string Type, std::string * Return){
+	value ParJson = from_string(Json);
 	switch(Type) {
 		case("string")
-			*ReturnString = JsonParse[Key].GetString();
+			*ReturnString = ParJson.at(Key).getstring();
 
 	}
 	
 
 }
 
-int RCAPI::Login(std::string Username, std::string Password;){
-	if(!LoggedIn){
-		std::string jsenddata = "{\"username\":\"" + Username + "\", \"password\":\"" + Password + "\"}";
+int RCAPI::CheckIfLoggedIn(){
 
-		//rapidjson variable used to parse data recieved
-		//Document JP;
+}
+
+//Public Functions
+//Login Function
+int RCAPI::Login(std::string Username, std::string Password;){
+	if(CheckIfLoggedIn()){
+		std::string jsenddata = "{\"username\":\"" + Username + "\", \"password\":\"" + Password + "\"}";
 	
 		//Authentication token
 		std:::string AuthToken = "X-Auth-Token: ";
 	
 		//User ID
 		std::string UserId = "X-User-Id: ";
-	
-		//Curl options
-		//Combines the api url and outputs it as a c string
-		curl_easy_setopt(CurlAPI, CURLOPT_URL, (APIURL+"login").c_str());
 		
-		//Puts the data in the post fields to be sent
-		curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, jsenddata.c_str());
+		//Sending data
+		SendData(jsenddata, 5);
+		
+		//Extracts inner json
+		std::string InnerJson = ExtractData(APIResponse, "data");
 
-		//Sends the request
-		curl_easy_perform(CurlAPI);
-		
-		/*
-		//Parses the response
-		JP.Parse(APIResponse.c_str());
-		
-		//Extracts the data json string
-		const Value& user = JP["data"];
-	
-		//Extracts the authToken from data
-		AuthToken.append(user["authToken"].GetString());
-	
-		//Extracts the userID from data
-		UserId.append(user["userId"].GetString());
-		*/
+		//Appends UserID and AuthToken to their respective strings
+		AuthToken.append(ExtractData(InnerJson, "authToken"));
+		UserId.append(ExtractData(InnerJson, "userId"));
 
-		AuthToken.append();
-		UserId.append();
 		//Appends the userID and AuthToken to the header
 		headers = curl_slist_append(headers, AuthToken.c_str());
 		headers = curl_slist_append(headers, UserId.c_str());
@@ -209,24 +234,26 @@ int RCAPI::Login(std::string Username, std::string Password;){
 		//Clears the options to prevent anything bad from happening ;)
 		curl_easy_setopt(CurlAPI, CURLOPT_URL, NULL);
 		curl_easy_setopt(CurlAPI, CURLOPT_POSTFIELDS, NULL);
-		LoggedIn = true;	
+		LoggedIn = true;
+		return RCAPI_GOOD;	
 	}
 	else {
-		
+		return RCAPI_ALREADYLOGGEDIN;
 	}
 }
-//Going to reimplement the message function to support a message object.
 
+//Send message function
+//Going to reimplement the message function to support a message object.
 int RCAPI::SendMessage(MessageObj Message){
 	if(LoggedIn){
 		
 		return RCAPI_GOOD;
 	}
-	else{
+	else
 		return RCAPI_NOTLOGGEDIN;
-	}
 
-}	
+}
+
 class MessageObj {
 	public:
 		std::string Channel = "";
@@ -253,7 +280,7 @@ class MessageObj {
 	
 	private:
 		int AssembleJson();
-		int JsonFormat(int ConstArray, std::string Value);
+		int JsonFormat(int ConstArray, std::string Value = "", std::string * RetJson);
 };
 
 int MessageObj::JsonFormat(int ConstArray, std::string Value = "", std::string * RetJson){
@@ -266,32 +293,32 @@ int MessageObj::JsonFormat(int ConstArray, std::string Value = "", std::string *
 		return MESSAGEOBJ_GOOD
 	}
 	else
-		return MESSAGEOBJ_;
+		return MESSAGEOBJ_NOVALUE;
 }
 
 int MessageObj::AssembleJson(std::string * MessageJson){
 	std::string MessageJson = "{";
 	int CurrentParameter = 0;
 
-	JsonFormat(CurrentParameter, Channel);
-	JsonFormat(++CurrentParameter, Text);
-	JsonFormat(++CurrentParameter, Alias);
-	JsonFormat(++CurrentParameter, Emoji);
-	JsonFormat(++CurrentParameter, Avatar);
-	JsonFormat(++CurrentParameter, AColor);
-	JsonFormat(++CurrentParameter, AText);
-	JsonFormat(++CurrentParameter, ATs);
-	JsonFormat(++CurrentParameter, AThumb_Url);
-	JsonFormat(++CurrentParameter, AMessage_Link);
-	JsonFormat(++CurrentParameter, ACollapsed);
-	JsonFormat(++CurrentParameter, AAuthor_Name);
-	JsonFormat(++CurrentParameter, AAuthor_Link);
-	JsonFormat(++CurrentParameter, ATitle);
-	JsonFormat(++CurrentParameter, ATitle_Link);
-	JsonFormat(++CurrentParameter, ATitle_Link_Download);
-	JsonFormat(++CurrentParameter, AImage_Url);
-	JsonFormat(++CurrentParameter, AAudio_Url);
-	JsonFormat(++CurrentParameter, AVideo_Url);
+	JsonFormat(CurrentParameter, Channel, &MessageJson);
+	JsonFormat(++CurrentParameter, Text, &MessageJson);
+	JsonFormat(++CurrentParameter, Alias, &MessageJson);
+	JsonFormat(++CurrentParameter, Emoji, &MessageJson);
+	JsonFormat(++CurrentParameter, Avatar, &MessageJson);
+	JsonFormat(++CurrentParameter, AColor, &MessageJson);
+	JsonFormat(++CurrentParameter, AText, &MessageJson);
+	JsonFormat(++CurrentParameter, ATs, &MessageJson);
+	JsonFormat(++CurrentParameter, AThumb_Url, &MessageJson);
+	JsonFormat(++CurrentParameter, AMessage_Link, &MessageJson);
+	JsonFormat(++CurrentParameter, ACollapsed, &MessageJson);
+	JsonFormat(++CurrentParameter, AAuthor_Name, &MessageJson);
+	JsonFormat(++CurrentParameter, AAuthor_Link, &MessageJson);
+	JsonFormat(++CurrentParameter, ATitle, &MessageJson);
+	JsonFormat(++CurrentParameter, ATitle_Link, &MessageJson);
+	JsonFormat(++CurrentParameter, ATitle_Link_Download, &MessageJson);
+	JsonFormat(++CurrentParameter, AImage_Url, &MessageJson);
+	JsonFormat(++CurrentParameter, AAudio_Url, &MessageJson);
+	JsonFormat(++CurrentParameter, AVideo_Url, &MessageJson);
 	JsonFormat(-1);
 
 	return MessageJson;
